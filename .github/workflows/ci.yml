@@ -17,8 +17,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
+      # Report every Node version independently instead of cancelling the rest on the first failure.
+      fail-fast: false
       matrix:
-        node: [20, 22, 24]
+        # Vitest and jsdom require Node 22.12 or newer.
+        node: [22, 24]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

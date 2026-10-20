@@ -5,7 +5,7 @@
   "description": "Festa — a Gemini-powered celebration & event planning assistant.",
   "type": "module",
   "engines": {
-    "node": ">=20.6"
+    "node": ">=22.12"
   },
   "scripts": {
     "dev": "node scripts/dev.mjs",
