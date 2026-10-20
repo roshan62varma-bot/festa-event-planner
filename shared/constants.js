@@ -26,12 +26,66 @@ export const BUDGET_CATEGORIES = Object.freeze([
 
 /** Typical budget shares (each row sums to 1) used when Gemini is unavailable. */
 export const DEFAULT_SHARES = Object.freeze({
-  wedding: { venue: 0.25, catering: 0.3, decor: 0.12, av: 0.05, entertainment: 0.08, photography: 0.1, stationery: 0.03, contingency: 0.07 },
-  birthday: { venue: 0.2, catering: 0.35, decor: 0.15, av: 0.05, entertainment: 0.12, photography: 0.03, stationery: 0.03, contingency: 0.07 },
-  conference: { venue: 0.3, catering: 0.25, decor: 0.04, av: 0.2, entertainment: 0.04, photography: 0.05, stationery: 0.05, contingency: 0.07 },
-  cultural: { venue: 0.2, catering: 0.25, decor: 0.18, av: 0.12, entertainment: 0.12, photography: 0.04, stationery: 0.02, contingency: 0.07 },
-  community: { venue: 0.15, catering: 0.35, decor: 0.1, av: 0.12, entertainment: 0.1, photography: 0.03, stationery: 0.05, contingency: 0.1 },
-  milestone: { venue: 0.22, catering: 0.33, decor: 0.14, av: 0.05, entertainment: 0.08, photography: 0.08, stationery: 0.03, contingency: 0.07 },
+  wedding: {
+    venue: 0.25,
+    catering: 0.3,
+    decor: 0.12,
+    av: 0.05,
+    entertainment: 0.08,
+    photography: 0.1,
+    stationery: 0.03,
+    contingency: 0.07,
+  },
+  birthday: {
+    venue: 0.2,
+    catering: 0.35,
+    decor: 0.15,
+    av: 0.05,
+    entertainment: 0.12,
+    photography: 0.03,
+    stationery: 0.03,
+    contingency: 0.07,
+  },
+  conference: {
+    venue: 0.3,
+    catering: 0.25,
+    decor: 0.04,
+    av: 0.2,
+    entertainment: 0.04,
+    photography: 0.05,
+    stationery: 0.05,
+    contingency: 0.07,
+  },
+  cultural: {
+    venue: 0.2,
+    catering: 0.25,
+    decor: 0.18,
+    av: 0.12,
+    entertainment: 0.12,
+    photography: 0.04,
+    stationery: 0.02,
+    contingency: 0.07,
+  },
+  community: {
+    venue: 0.15,
+    catering: 0.35,
+    decor: 0.1,
+    av: 0.12,
+    entertainment: 0.1,
+    photography: 0.03,
+    stationery: 0.05,
+    contingency: 0.1,
+  },
+  milestone: {
+    venue: 0.22,
+    catering: 0.33,
+    decor: 0.14,
+    av: 0.05,
+    entertainment: 0.08,
+    photography: 0.08,
+    stationery: 0.03,
+    contingency: 0.07,
+  },
 });
 
 export const CURRENCIES = Object.freeze(['INR', 'USD', 'EUR', 'GBP', 'AED', 'SGD', 'AUD', 'CAD']);
@@ -68,7 +122,14 @@ export const CREATIVE_KINDS = Object.freeze([
 export const INVITE_TONES = Object.freeze(['warm', 'formal', 'playful', 'minimal']);
 
 export const VENDOR_TYPES = Object.freeze([
-  'Venue', 'Caterer', 'Decorator', 'Photographer', 'DJ or band', 'AV rental', 'Baker', 'Florist',
+  'Venue',
+  'Caterer',
+  'Decorator',
+  'Photographer',
+  'DJ or band',
+  'AV rental',
+  'Baker',
+  'Florist',
 ]);
 
 export const LIMITS = Object.freeze({

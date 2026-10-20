@@ -1,7 +1,10 @@
 import { GoogleGenAI } from '@google/genai';
 
 export const DEFAULT_MODELS = ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.6-flash'];
+/** How long a model that just failed is moved to the back of the queue. */
 const COOLDOWN_MS = 60_000;
+/** Not worth starting another model attempt with less time than this left. */
+const MIN_ATTEMPT_MS = 1_000;
 const MISSING_MODEL = /\b404\b|NOT_FOUND|is not found|no longer available/i;
 // A bad or unauthorised key fails the same way on every model, so stop early.
 const AUTH_FAILURE = /\b(401|403)\b|API key|PERMISSION_DENIED|UNAUTHENTICATED/i;
@@ -17,7 +20,10 @@ export class AIUnavailableError extends Error {
 /** Parses model output as JSON, tolerating stray markdown fences. Returns null if it cannot. */
 export function parseModelJSON(text) {
   if (typeof text !== 'string' || !text.trim()) return null;
-  const stripped = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+  const stripped = text
+    .trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/, '');
   try {
     return JSON.parse(stripped);
   } catch {
@@ -33,6 +39,30 @@ export function parseModelJSON(text) {
 }
 
 /**
+ * @typedef {object} GeminiClientOptions
+ * @property {string} [apiKey] Required unless `sdk` is supplied.
+ * @property {string[]} [models] Fallback order.
+ * @property {number} [timeoutMs] Per-model attempt limit.
+ * @property {number} [deadlineMs] Total limit across all attempts.
+ * @property {string} [thinkingLevel] MINIMAL, LOW, MEDIUM or HIGH.
+ * @property {{ models: { generateContent: (request: object) => Promise<{ text?: string }> } }} [sdk] Injected in tests.
+ * @property {() => number} [now] Clock in milliseconds, injected in tests.
+ */
+
+/**
+ * @typedef {object} GenerateRequest
+ * @property {string} system System instruction with the rules.
+ * @property {string} prompt Task plus the user data block.
+ * @property {object} schema JSON Schema the response must match.
+ * @property {number} [temperature]
+ */
+
+/**
+ * The only interface the rest of the server depends on, so tests can swap in a fake.
+ * @typedef {{ generateJSON: (request: GenerateRequest) => Promise<{ data: unknown, model: string }> }} AIClient
+ */
+
+/**
  * Creates a small JSON-only wrapper around the Gemini API.
  * Models are tried in order: failures such as rate limits or overload move on to
  * the next model, auth failures stop immediately, and models the API reports as
@@ -41,7 +71,8 @@ export function parseModelJSON(text) {
  * out) is tried last for a minute, so one busy model does not slow every request.
  * `deadlineMs` caps the total time across models.
  *
- * @param {{ apiKey: string, models?: string[], timeoutMs?: number, deadlineMs?: number, thinkingLevel?: string, sdk?: { models: { generateContent: Function } }, now?: () => number }} options
+ * @param {GeminiClientOptions} options
+ * @returns {AIClient}
  */
 export function createGeminiClient({
   apiKey,
@@ -51,9 +82,11 @@ export function createGeminiClient({
   thinkingLevel = 'LOW',
   sdk,
   now = Date.now,
-} = {}) {
+}) {
   const client = sdk ?? new GoogleGenAI({ apiKey });
+  /** Models the API reported as missing or retired. */
   const unavailable = new Set();
+  /** @type {Map<string, number>} model -> time (ms) its cooldown ends */
   const coolingUntil = new Map();
 
   /** Healthy models first, in configured order, then recently failed ones. */
@@ -63,14 +96,17 @@ export function createGeminiClient({
     return [...usable.filter((m) => !(coolingUntil.get(m) > t)), ...usable.filter((m) => coolingUntil.get(m) > t)];
   };
 
+  /** @type {AIClient['generateJSON']} */
   async function generateJSON({ system, prompt, schema, temperature = 0.8 }) {
     let lastError;
     const deadline = now() + deadlineMs;
     for (const model of order()) {
       const remaining = deadline - now();
-      if (remaining <= 1000) break;
+      if (remaining <= MIN_ATTEMPT_MS) break;
       try {
-        const response = await client.models.generateContent({
+        const response = await /** @type {{ generateContent: (r: object) => Promise<{ text?: string }> }} */ (
+          client.models
+        ).generateContent({
           model,
           contents: prompt,
           config: {

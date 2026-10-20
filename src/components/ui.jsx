@@ -1,6 +1,21 @@
 import { useId } from 'react';
 
-/** Labelled form field. Wires the hint and error to the control for screen readers. */
+/**
+ * Props a Field passes to its control, linking the label, hint and error for assistive tech.
+ * @typedef {{ id: string, 'aria-describedby'?: string, 'aria-invalid'?: boolean }} ControlProps
+ */
+
+/**
+ * Labelled form field. The child is a render function that receives the
+ * control's id and ARIA wiring, so any input, select or textarea can be used.
+ * @param {object} props
+ * @param {string} props.label
+ * @param {(control: ControlProps) => import('react').ReactNode} props.children
+ * @param {string} [props.hint]
+ * @param {string} [props.error]
+ * @param {boolean} [props.optional]
+ * @param {string} [props.className]
+ */
 export function Field({ label, hint, error, children, optional = false, className = '' }) {
   const id = useId();
   const hintId = hint ? `${id}-hint` : undefined;
@@ -13,21 +28,52 @@ export function Field({ label, hint, error, children, optional = false, classNam
         {label}
         {optional && <span className="field__optional"> (optional)</span>}
       </label>
-      {hint && <p id={hintId} className="field__hint">{hint}</p>}
+      {hint && (
+        <p id={hintId} className="field__hint">
+          {hint}
+        </p>
+      )}
       {children({ id, 'aria-describedby': describedBy, 'aria-invalid': error ? true : undefined })}
-      {error && <p id={errorId} className="field__error">{error}</p>}
+      {error && (
+        <p id={errorId} className="field__error">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
 
-export function Button({ variant = 'primary', size, busy = false, children, className = '', ...props }) {
+/**
+ * Button with consistent variants. `busy` shows a spinner and disables it,
+ * and is announced through aria-busy.
+ * @param {object} props
+ * @param {import('react').ReactNode} props.children
+ * @param {'primary' | 'secondary' | 'ghost'} [props.variant]
+ * @param {'sm' | 'lg'} [props.size]
+ * @param {boolean} [props.busy]
+ * @param {boolean} [props.disabled]
+ * @param {'button' | 'submit'} [props.type]
+ * @param {string} [props.className]
+ * @param {() => void} [props.onClick]
+ */
+export function Button({
+  variant = 'primary',
+  size,
+  busy = false,
+  disabled,
+  type = 'button',
+  className = '',
+  children,
+  onClick,
+}) {
   return (
     <button
-      type="button"
+      // eslint-disable-next-line react/button-has-type -- type is always 'button' or 'submit'
+      type={type}
       className={`btn btn--${variant} ${size ? `btn--${size}` : ''} ${className}`}
       aria-busy={busy || undefined}
-      disabled={busy || props.disabled}
-      {...props}
+      disabled={busy || disabled}
+      onClick={onClick}
     >
       {busy && <span className="spinner" aria-hidden="true" />}
       {children}
@@ -48,12 +94,24 @@ const STATUS_LABELS = {
   'on-track': 'On track',
 };
 
+/**
+ * Status pill. The tone sets the colour and, without children, the text too.
+ * Colour is never the only signal: every tone has a text label.
+ * @param {{ tone: string, children?: import('react').ReactNode }} props
+ */
 export function Badge({ tone, children }) {
   return <span className={`badge badge--${tone}`}>{children ?? STATUS_LABELS[tone] ?? tone}</span>;
 }
 
+/**
+ * @param {object} props
+ * @param {string} props.title
+ * @param {string} [props.description]
+ * @param {import('react').ReactNode} [props.action] Optional control aligned to the right.
+ * @param {2 | 3} [props.level] Heading level, to keep the document outline correct.
+ */
 export function SectionHeading({ title, description, action, level = 2 }) {
-  const Heading = `h${level}`;
+  const Heading = level === 3 ? 'h3' : 'h2';
   return (
     <div className="section-heading">
       <div>
@@ -65,6 +123,20 @@ export function SectionHeading({ title, description, action, level = 2 }) {
   );
 }
 
+/**
+ * A labelled headline number, e.g. "Spent ₹5,10,000".
+ * @param {{ label: string, value: import('react').ReactNode, tone?: 'danger' }} props
+ */
+export function Stat({ label, value, tone }) {
+  return (
+    <div className={`stat ${tone ? `stat--${tone}` : ''}`}>
+      <span className="stat__label">{label}</span>
+      <span className="stat__value">{value}</span>
+    </div>
+  );
+}
+
+/** @param {{ title: string, children: import('react').ReactNode }} props */
 export function EmptyState({ title, children }) {
   return (
     <div className="empty">

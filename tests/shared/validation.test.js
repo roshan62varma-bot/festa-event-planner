@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { isValidISODate, sanitizeGuestSummary, sanitizeText, validateCreativeInput, validateEventInput } from '../../shared/validation.js';
+import {
+  isValidISODate,
+  sanitizeGuestSummary,
+  sanitizeText,
+  validateCreativeInput,
+  validateEventInput,
+} from '../../shared/validation.js';
 import { TODAY, validEvent } from '../fixtures.js';
 
 describe('sanitizeText', () => {
@@ -34,7 +40,7 @@ describe('validateEventInput', () => {
   it('reports every missing required field', () => {
     const { ok, errors } = validateEventInput({}, { today: TODAY });
     expect(ok).toBe(false);
-    expect(Object.keys(errors).sort()).toEqual(['budget', 'currency', 'date', 'guests', 'name', 'type']);
+    expect(Object.keys(errors).toSorted()).toEqual(['budget', 'currency', 'date', 'guests', 'name', 'type']);
   });
 
   it('rejects past dates, unknown types and out-of-range numbers', () => {
@@ -42,7 +48,13 @@ describe('validateEventInput', () => {
       { ...validEvent, date: '2020-01-01', type: 'heist', guests: 0, budget: 5, currency: 'BTC' },
       { today: TODAY },
     );
-    expect(errors).toMatchObject({ date: expect.stringMatching(/passed/), type: expect.any(String), guests: expect.any(String), budget: expect.any(String), currency: expect.any(String) });
+    expect(errors).toMatchObject({
+      date: expect.stringMatching(/passed/),
+      type: expect.any(String),
+      guests: expect.any(String),
+      budget: expect.any(String),
+      currency: expect.any(String),
+    });
   });
 
   it('accepts an event happening today', () => {
@@ -50,8 +62,21 @@ describe('validateEventInput', () => {
   });
 
   it('never passes through unexpected keys', () => {
-    const { value } = validateEventInput({ ...validEvent, __proto__: { admin: true }, role: 'system' }, { today: TODAY });
-    expect(Object.keys(value).sort()).toEqual(['budget', 'currency', 'date', 'guests', 'location', 'name', 'notes', 'type', 'vibe']);
+    const { value } = validateEventInput(
+      { ...validEvent, __proto__: { admin: true }, role: 'system' },
+      { today: TODAY },
+    );
+    expect(Object.keys(value).toSorted()).toEqual([
+      'budget',
+      'currency',
+      'date',
+      'guests',
+      'location',
+      'name',
+      'notes',
+      'type',
+      'vibe',
+    ]);
   });
 
   it('handles null and non-object input', () => {
@@ -69,7 +94,13 @@ describe('validateCreativeInput', () => {
   });
 
   it('keeps only aggregate guest numbers', () => {
-    const summary = sanitizeGuestSummary({ attending: '12', pending: -4, groups: 3, dietary: { vegan: 2 }, names: ['Asha'] });
+    const summary = sanitizeGuestSummary({
+      attending: '12',
+      pending: -4,
+      groups: 3,
+      dietary: { vegan: 2 },
+      names: ['Asha'],
+    });
     expect(summary).toEqual({ attending: 12, pending: 0, groups: 3, dietary: { vegan: 2 } });
   });
 });

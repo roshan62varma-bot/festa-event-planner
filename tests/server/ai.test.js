@@ -29,9 +29,16 @@ describe('createGeminiClient', () => {
   it('requests JSON constrained by the schema', async () => {
     const { sdk, generateContent } = fakeSdk({ m1: () => ({ text: '{"ok":true}' }) });
     const client = createGeminiClient({ sdk, models: ['m1'] });
-    await expect(client.generateJSON({ ...request, schema: { type: 'object' } })).resolves.toEqual({ data: { ok: true }, model: 'm1' });
+    await expect(client.generateJSON({ ...request, schema: { type: 'object' } })).resolves.toEqual({
+      data: { ok: true },
+      model: 'm1',
+    });
     const { config } = generateContent.mock.calls[0][0];
-    expect(config).toMatchObject({ responseMimeType: 'application/json', responseJsonSchema: { type: 'object' }, systemInstruction: 's' });
+    expect(config).toMatchObject({
+      responseMimeType: 'application/json',
+      responseJsonSchema: { type: 'object' },
+      systemInstruction: 's',
+    });
     expect(config.abortSignal).toBeInstanceOf(AbortSignal);
     expect(config.thinkingConfig).toEqual({ thinkingLevel: 'LOW' });
   });
@@ -45,7 +52,9 @@ describe('createGeminiClient', () => {
 
   it('falls back to the next model on rate limits and bad JSON', async () => {
     const { sdk } = fakeSdk({
-      m1: () => { throw new Error('429 RESOURCE_EXHAUSTED'); },
+      m1: () => {
+        throw new Error('429 RESOURCE_EXHAUSTED');
+      },
       m2: () => ({ text: 'not json' }),
       m3: () => ({ text: '{"from":"m3"}' }),
     });
@@ -55,7 +64,9 @@ describe('createGeminiClient', () => {
 
   it('remembers missing models so later calls skip them', async () => {
     const { sdk, generateContent } = fakeSdk({
-      gone: () => { throw new Error('404 NOT_FOUND: model is not found'); },
+      gone: () => {
+        throw new Error('404 NOT_FOUND: model is not found');
+      },
       ok: () => ({ text: '{}' }),
     });
     const client = createGeminiClient({ sdk, models: ['gone', 'ok'] });
@@ -67,7 +78,10 @@ describe('createGeminiClient', () => {
   it('tries a recently failed model last for a while', async () => {
     let busy = true;
     const { sdk, generateContent } = fakeSdk({
-      a: () => { if (busy) throw new Error('503 UNAVAILABLE'); return { text: '{}' }; },
+      a: () => {
+        if (busy) throw new Error('503 UNAVAILABLE');
+        return { text: '{}' };
+      },
       b: () => ({ text: '{}' }),
     });
     let t = 0;
@@ -82,7 +96,9 @@ describe('createGeminiClient', () => {
 
   it('stops immediately on non-transient errors such as a bad key', async () => {
     const { sdk, generateContent } = fakeSdk({
-      m1: () => { throw new Error('400 API key not valid'); },
+      m1: () => {
+        throw new Error('400 API key not valid');
+      },
       m2: () => ({ text: '{}' }),
     });
     const client = createGeminiClient({ sdk, models: ['m1', 'm2'] });
@@ -121,10 +137,20 @@ describe('prompts', () => {
   });
 
   it('includes the refinement and creative options', () => {
-    expect(buildPlanPrompt(validEvent, { part: 'overview', today: TODAY, refinement: 'Go eco' })).toContain('"hostRequestedChange": "Go eco"');
-    expect(buildCreativePrompt(validEvent, { kind: 'invite', tone: 'playful' }, { today: TODAY })).toMatch(/playful tone/);
-    expect(buildCreativePrompt(validEvent, { kind: 'vendor-email', vendorType: 'Caterer' }, { today: TODAY })).toMatch(/to a Caterer/);
-    const withGuests = buildCreativePrompt(validEvent, { kind: 'activities', guestSummary: { attending: 9 } }, { today: TODAY });
+    expect(buildPlanPrompt(validEvent, { part: 'overview', today: TODAY, refinement: 'Go eco' })).toContain(
+      '"hostRequestedChange": "Go eco"',
+    );
+    expect(buildCreativePrompt(validEvent, { kind: 'invite', tone: 'playful' }, { today: TODAY })).toMatch(
+      /playful tone/,
+    );
+    expect(buildCreativePrompt(validEvent, { kind: 'vendor-email', vendorType: 'Caterer' }, { today: TODAY })).toMatch(
+      /to a Caterer/,
+    );
+    const withGuests = buildCreativePrompt(
+      validEvent,
+      { kind: 'activities', guestSummary: { attending: 9 } },
+      { today: TODAY },
+    );
     expect(withGuests).toContain('"attending": 9');
   });
 });
@@ -135,7 +161,7 @@ describe('schemas', () => {
   });
 
   it('splits the plan into two halves that together cover every section', () => {
-    const keys = [...PLAN_PART_SCHEMAS.overview.required, ...PLAN_PART_SCHEMAS.schedule.required].sort();
+    const keys = [...PLAN_PART_SCHEMAS.overview.required, ...PLAN_PART_SCHEMAS.schedule.required].toSorted();
     expect(keys).toEqual(['budget', 'milestones', 'runOfShow', 'summary', 'theme', 'vendors', 'watchouts']);
   });
 });

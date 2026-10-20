@@ -11,6 +11,7 @@ const LABELS = Object.fromEntries(BUDGET_CATEGORIES.map((c) => [c.id, c.label]))
  * @returns {Record<string, number>}
  */
 export function allocate(total, weights) {
+  /** @type {[string, number][]} */
   const entries = Object.entries(weights).map(([id, w]) => [id, Math.max(0, Number(w) || 0)]);
   const weightSum = entries.reduce((sum, [, w]) => sum + w, 0);
   const safeTotal = Math.max(0, Math.round(total));
@@ -24,7 +25,7 @@ export function allocate(total, weights) {
     return { id, floor: Math.floor(exact), remainder: exact - Math.floor(exact) };
   });
   let leftover = safeTotal - raw.reduce((sum, r) => sum + r.floor, 0);
-  const byRemainder = [...raw].sort((a, b) => b.remainder - a.remainder);
+  const byRemainder = raw.toSorted((a, b) => b.remainder - a.remainder);
   for (let i = 0; leftover > 0; i = (i + 1) % byRemainder.length, leftover -= 1) {
     byRemainder[i].floor += 1;
   }
@@ -35,6 +36,9 @@ export function allocate(total, weights) {
  * Turns whatever category list the model returned into a clean list that
  * covers every known category exactly once and sums exactly to `total`.
  * Model arithmetic is not trusted; only its relative weights are used.
+ * @param {unknown} categories Raw categories from the model.
+ * @param {number} total
+ * @returns {import('./types.js').BudgetCategory[]}
  */
 export function normalizeCategories(categories, total) {
   const byId = new Map();
@@ -59,8 +63,10 @@ export function rescaleCategories(categories, newTotal) {
 
 /**
  * Compares planned amounts with what has actually been spent.
- * @param {{id:string,label:string,amount:number}[]} categories
- * @param {Record<string, number>} spent
+ * A line is "near" its limit from 90% and "over" beyond 100%.
+ * @param {import('./types.js').BudgetCategory[]} categories
+ * @param {Record<string, number>} [spent] Actual spend by category id.
+ * @param {number} [total] The host's total budget; defaults to the sum of the lines.
  */
 export function summarizeBudget(categories, spent = {}, total = sumAmounts(categories)) {
   const rows = categories.map((c) => {

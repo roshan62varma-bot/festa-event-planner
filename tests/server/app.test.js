@@ -18,13 +18,19 @@ async function start(options = {}) {
   });
   const base = `http://127.0.0.1:${server.address().port}`;
   const post = (path, body, headers = {}) =>
-    fetch(base + path, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: typeof body === 'string' ? body : JSON.stringify(body) });
+    fetch(base + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...headers },
+      body: typeof body === 'string' ? body : JSON.stringify(body),
+    });
   return { server, base, post };
 }
 
 describe('API', () => {
   let ctx;
-  beforeAll(async () => { ctx = await start(); });
+  beforeAll(async () => {
+    ctx = await start();
+  });
   afterAll(() => ctx.server.close());
 
   it('reports health and AI availability', async () => {
@@ -53,7 +59,7 @@ describe('API', () => {
     const res = await ctx.post('/api/plan', { event: { ...validEvent, guests: -1, date: '2001-01-01' } });
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(Object.keys(body.fields).sort()).toEqual(['date', 'guests']);
+    expect(Object.keys(body.fields).toSorted()).toEqual(['date', 'guests']);
   });
 
   it('generates ideas and validates the idea kind', async () => {

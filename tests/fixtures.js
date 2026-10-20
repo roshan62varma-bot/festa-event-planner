@@ -17,7 +17,11 @@ export const validEvent = Object.freeze({
 export function geminiPlan() {
   return {
     summary: 'A retro disco night with a mirror-ball centrepiece.',
-    theme: { name: 'Disco Fever', description: 'Glitter and neon.', palette: ['Silver #C0C0C0', 'Hot pink #FF3EA5', 'Midnight'] },
+    theme: {
+      name: 'Disco Fever',
+      description: 'Glitter and neon.',
+      palette: ['Silver #C0C0C0', 'Hot pink #FF3EA5', 'Midnight'],
+    },
     budget: {
       categories: [
         { id: 'venue', amount: 50000, rationale: 'Rooftop hire.' },
@@ -30,10 +34,19 @@ export function geminiPlan() {
     },
     milestones: [
       { title: 'Book the rooftop', detail: 'Confirm capacity.', weeksBefore: 10, priority: 'high', category: 'venue' },
-      { title: 'Send invites', detail: 'Ask for dietary needs.', weeksBefore: 6, priority: 'urgent', category: 'guests' },
+      {
+        title: 'Send invites',
+        detail: 'Ask for dietary needs.',
+        weeksBefore: 6,
+        priority: 'urgent',
+        category: 'guests',
+      },
       { title: '', detail: 'Empty title is dropped.', weeksBefore: 2, priority: 'low', category: 'decor' },
     ],
-    runOfShow: [{ time: '19:00', activity: 'Doors open', owner: 'Host' }, { time: 'late', activity: 'Dance', owner: 'DJ' }],
+    runOfShow: [
+      { time: '19:00', activity: 'Doors open', owner: 'Host' },
+      { time: 'late', activity: 'Dance', owner: 'DJ' },
+    ],
     vendors: [{ type: 'DJ', why: 'Needs a disco catalogue.', questions: ['Do you bring lights?'], bookWeeksBefore: 8 }],
     watchouts: ['Rooftop wind.'],
   };

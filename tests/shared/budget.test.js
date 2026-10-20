@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { allocate, formatMoney, normalizeCategories, rescaleCategories, summarizeBudget, sumAmounts } from '../../shared/budget.js';
+import {
+  allocate,
+  formatMoney,
+  normalizeCategories,
+  rescaleCategories,
+  summarizeBudget,
+  sumAmounts,
+} from '../../shared/budget.js';
 import { BUDGET_CATEGORIES, DEFAULT_SHARES } from '../../shared/constants.js';
 
 describe('allocate', () => {
@@ -29,7 +36,12 @@ describe('allocate', () => {
 describe('normalizeCategories', () => {
   it('covers every category once, drops unknown ids and fixes model arithmetic', () => {
     const result = normalizeCategories(
-      [{ id: 'venue', amount: 300, rationale: 'r' }, { id: 'venue', amount: 999 }, { id: 'bogus', amount: 5000 }, { id: 'catering', amount: 100 }],
+      [
+        { id: 'venue', amount: 300, rationale: 'r' },
+        { id: 'venue', amount: 999 },
+        { id: 'bogus', amount: 5000 },
+        { id: 'catering', amount: 100 },
+      ],
       2000,
     );
     expect(result.map((c) => c.id)).toEqual(BUDGET_CATEGORIES.map((c) => c.id));
@@ -45,13 +57,22 @@ describe('normalizeCategories', () => {
 
 describe('rescaleCategories', () => {
   it('keeps proportions at a new total', () => {
-    const scaled = rescaleCategories([{ id: 'a', amount: 200 }, { id: 'b', amount: 800 }], 500);
+    const scaled = rescaleCategories(
+      [
+        { id: 'a', amount: 200 },
+        { id: 'b', amount: 800 },
+      ],
+      500,
+    );
     expect(scaled.map((c) => c.amount)).toEqual([100, 400]);
   });
 });
 
 describe('summarizeBudget', () => {
-  const categories = [{ id: 'venue', label: 'Venue', amount: 1000 }, { id: 'decor', label: 'Decor', amount: 500 }];
+  const categories = [
+    { id: 'venue', label: 'Venue', amount: 1000 },
+    { id: 'decor', label: 'Decor', amount: 500 },
+  ];
 
   it('flags categories that are over or nearly used up', () => {
     const summary = summarizeBudget(categories, { venue: 1200, decor: 460 }, 1500);

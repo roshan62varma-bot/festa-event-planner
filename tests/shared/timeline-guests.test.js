@@ -50,7 +50,13 @@ describe('guests', () => {
   it('validates and normalises a guest', () => {
     expect(validateGuest({ name: '  ' }).ok).toBe(false);
     expect(validateGuest({ name: 'Zoe', plusOnes: 20 }).errors.plusOnes).toBeDefined();
-    expect(validateGuest({ name: 'Zoe', rsvp: 'hacker', dietary: 'x' }).value).toEqual({ name: 'Zoe', group: 'Friends', rsvp: 'pending', dietary: 'none', plusOnes: 0 });
+    expect(validateGuest({ name: 'Zoe', rsvp: 'hacker', dietary: 'x' }).value).toEqual({
+      name: 'Zoe',
+      group: 'Friends',
+      rsvp: 'pending',
+      dietary: 'none',
+      plusOnes: 0,
+    });
   });
 
   it('counts parties including plus-ones', () => {
@@ -76,7 +82,13 @@ describe('guests', () => {
   });
 
   it('packs small groups into shared tables and clamps table size', () => {
-    const many = Array.from({ length: 6 }, (_, i) => ({ name: `G${i}`, group: `g${i % 3}`, rsvp: 'attending', dietary: 'none', plusOnes: 0 }));
+    const many = Array.from({ length: 6 }, (_, i) => ({
+      name: `G${i}`,
+      group: `g${i % 3}`,
+      rsvp: 'attending',
+      dietary: 'none',
+      plusOnes: 0,
+    }));
     expect(planSeating(many, 6)).toHaveLength(1);
     expect(planSeating(many, 1).every((t) => t.seats.length <= 2)).toBe(true);
   });

@@ -35,7 +35,11 @@ describe('sanitizePlan', () => {
   });
 
   it('bounds creative output', () => {
-    const result = sanitizeCreative({ title: 'x', intro: 'y', items: Array.from({ length: 40 }, (_, i) => ({ heading: `h${i}`, body: 'b', tags: [1, 'a'] })) });
+    const result = sanitizeCreative({
+      title: 'x',
+      intro: 'y',
+      items: Array.from({ length: 40 }, (_, i) => ({ heading: `h${i}`, body: 'b', tags: [1, 'a'] })),
+    });
     expect(result.items).toHaveLength(12);
     expect(result.items[0].tags).toEqual(['a']);
   });
@@ -84,7 +88,15 @@ describe('createPlanner', () => {
     const first = await planner.createPlan(validEvent);
     const second = await planner.createPlan(validEvent);
     expect(first).toMatchObject({ source: 'gemini', model: 'fake-model', cached: false });
-    expect(Object.keys(first.plan).sort()).toEqual(['budget', 'milestones', 'runOfShow', 'summary', 'theme', 'vendors', 'watchouts']);
+    expect(Object.keys(first.plan).toSorted()).toEqual([
+      'budget',
+      'milestones',
+      'runOfShow',
+      'summary',
+      'theme',
+      'vendors',
+      'watchouts',
+    ]);
     expect(second.cached).toBe(true);
     expect(ai.calls).toHaveLength(2);
     expect(ai.calls.map((c) => Object.keys(c.schema.properties).length)).toEqual([4, 3]);

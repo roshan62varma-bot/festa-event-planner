@@ -28,6 +28,14 @@ export const CREATIVE_SYSTEM = `You are Festa's creative director. You produce f
 Ideas must reflect the event type, theme, guest count and budget. Prefer concrete details (materials, songs, timings) over generic advice.
 ${GUARDRAILS}`;
 
+/** @typedef {import('../../shared/types.js').EventBrief} EventBrief */
+
+/**
+ * Facts the model should rely on, with the arithmetic done in code.
+ * @param {EventBrief} event
+ * @param {string} today ISO date.
+ * @returns {Record<string, unknown> & { daysUntilEvent: number }}
+ */
 function eventFacts(event, today) {
   const type = EVENT_TYPES.find((t) => t.id === event.type);
   return {
@@ -66,9 +74,11 @@ const PLAN_TASKS = {
  * The master plan is generated as two halves in parallel: the overview
  * (summary, theme, budget, risks) and the schedule (timeline, run of show,
  * vendors). Two shorter responses arrive in roughly half the time of one long one.
- * @param {'overview' | 'schedule'} part
+ * @param {EventBrief} event
+ * @param {{ part: 'overview' | 'schedule', refinement?: string, today: string }} options
+ * @returns {string}
  */
-export function buildPlanPrompt(event, { part, refinement = '', today } = {}) {
+export function buildPlanPrompt(event, { part, refinement = '', today }) {
   const facts = eventFacts(event, today);
   const maxWeeks = Math.max(0, Math.floor(facts.daysUntilEvent / 7));
   const [task, ...rules] = PLAN_TASKS[part](event, maxWeeks);
@@ -78,15 +88,28 @@ export function buildPlanPrompt(event, { part, refinement = '', today } = {}) {
 }
 
 const CREATIVE_TASKS = {
-  decor: () => 'Propose 3 distinct decor concepts. For each, heading = concept name, body = the look, key pieces, materials and a DIY saving, tags = 3 to 4 palette colours.',
-  playlist: () => 'Curate a 12-song playlist that follows the arc of the event. heading = "Song title, Artist" (real, well-known songs only), body = why it fits that moment, tags = the moment (e.g. "Arrival", "First dance", "Finale").',
-  icebreakers: () => 'Suggest 5 icebreaker activities that work for this crowd size. heading = activity name, body = how to run it in 2 to 3 sentences, tags = duration and group size.',
-  activities: (input) => `Recommend 5 personalised guest activities and seating or flow tips.${input.guestSummary ? ' Use the guestSummary (aggregate RSVP and dietary counts) to tailor them, including food stations for dietary needs.' : ''} heading = activity, body = how and why, tags = audience or moment.`,
-  invite: (input) => `Write 3 invitation variants in a ${input.tone} tone. heading = variant name, body = the complete invitation text including date, place, RSVP request and a line asking guests to share dietary needs. Keep each under 90 words. tags = channel such as "WhatsApp", "Email", "Printed card".`,
-  'vendor-email': (input) => `Draft 1 enquiry email to a ${input.vendorType}. heading = subject line, body = the complete email: event facts, what is needed, questions on pricing, inclusions, cancellation and availability, and a clear request for a quote. Use [Your name] as the sign-off placeholder. tags = key asks.`,
+  decor: () =>
+    'Propose 3 distinct decor concepts. For each, heading = concept name, body = the look, key pieces, materials and a DIY saving, tags = 3 to 4 palette colours.',
+  playlist: () =>
+    'Curate a 12-song playlist that follows the arc of the event. heading = "Song title, Artist" (real, well-known songs only), body = why it fits that moment, tags = the moment (e.g. "Arrival", "First dance", "Finale").',
+  icebreakers: () =>
+    'Suggest 5 icebreaker activities that work for this crowd size. heading = activity name, body = how to run it in 2 to 3 sentences, tags = duration and group size.',
+  activities: (input) =>
+    `Recommend 5 personalised guest activities and seating or flow tips.${input.guestSummary ? ' Use the guestSummary (aggregate RSVP and dietary counts) to tailor them, including food stations for dietary needs.' : ''} heading = activity, body = how and why, tags = audience or moment.`,
+  invite: (input) =>
+    `Write 3 invitation variants in a ${input.tone} tone. heading = variant name, body = the complete invitation text including date, place, RSVP request and a line asking guests to share dietary needs. Keep each under 90 words. tags = channel such as "WhatsApp", "Email", "Printed card".`,
+  'vendor-email': (input) =>
+    `Draft 1 enquiry email to a ${input.vendorType}. heading = subject line, body = the complete email: event facts, what is needed, questions on pricing, inclusions, cancellation and availability, and a clear request for a quote. Use [Your name] as the sign-off placeholder. tags = key asks.`,
 };
 
-export function buildCreativePrompt(event, input, { today } = {}) {
+/**
+ * @param {EventBrief} event
+ * @param {Pick<import('../../shared/types.js').CreativeRequest, 'kind'> & Partial<import('../../shared/types.js').CreativeRequest>} input
+ * @param {{ today: string }} options
+ * @returns {string}
+ */
+export function buildCreativePrompt(event, input, { today }) {
+  /** @type {Record<string, unknown>} */
   const data = { ...eventFacts(event, today) };
   if (input.guestSummary && input.kind === 'activities') data.guestSummary = input.guestSummary;
   if (input.extra) data.hostNote = input.extra;

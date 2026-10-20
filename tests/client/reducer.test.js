@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { initialState, plannerReducer, restoreState } from '../../src/state/plannerReducer.js';
+import { actions } from '../../src/state/actions.js';
 import { sanitizePlan } from '../../server/services/sanitize.js';
 import { sumAmounts } from '../../shared/budget.js';
 import { geminiPlan, validEvent } from '../fixtures.js';
@@ -36,7 +37,11 @@ describe('plannerReducer', () => {
   });
 
   it('adds, updates and removes guests', () => {
-    let s = plannerReducer(loaded, { type: 'guest/added', id: 'g1', guest: { name: 'Asha', group: 'Family', rsvp: 'pending', dietary: 'none', plusOnes: 0 } });
+    let s = plannerReducer(loaded, {
+      type: 'guest/added',
+      id: 'g1',
+      guest: { name: 'Asha', group: 'Family', rsvp: 'pending', dietary: 'none', plusOnes: 0 },
+    });
     s = plannerReducer(s, { type: 'guest/updated', id: 'g1', patch: { rsvp: 'attending' } });
     expect(s.guests[0]).toMatchObject({ id: 'g1', rsvp: 'attending' });
     s = plannerReducer(s, { type: 'guest/removed', id: 'g1' });
@@ -55,7 +60,12 @@ describe('plannerReducer', () => {
 
   it('clamps table size, stores ideas and resets', () => {
     expect(plannerReducer(loaded, { type: 'seating/size', size: 99 }).tableSize).toBe(20);
-    const s = plannerReducer(loaded, { type: 'ideas/loaded', kind: 'decor', ideas: { title: 't', items: [] }, source: 'gemini' });
+    const s = plannerReducer(loaded, {
+      type: 'ideas/loaded',
+      kind: 'decor',
+      ideas: { title: 't', items: [] },
+      source: 'gemini',
+    });
     expect(s.ideas.decor.source).toBe('gemini');
     expect(plannerReducer(s, { type: 'reset' })).toBe(initialState);
     expect(plannerReducer(s, { type: 'unknown' })).toBe(s);
@@ -68,5 +78,16 @@ describe('restoreState', () => {
     expect(restoreState('{not json')).toBe(initialState);
     expect(restoreState(JSON.stringify({ hello: 'world' }))).toBe(initialState);
     expect(restoreState(null)).toBe(initialState);
+  });
+
+  it('drops unknown keys from tampered storage', () => {
+    const restored = restoreState(JSON.stringify({ ...loaded, isAdmin: true, __proto__: { polluted: true } }));
+    expect(restored).not.toHaveProperty('isAdmin');
+    expect(Object.keys(restored).toSorted()).toEqual(Object.keys(initialState).toSorted());
+    expect({}.polluted).toBeUndefined();
+  });
+
+  it('ignores a rebalance before any plan exists', () => {
+    expect(plannerReducer(initialState, actions.budgetRescaled(5000))).toBe(initialState);
   });
 });

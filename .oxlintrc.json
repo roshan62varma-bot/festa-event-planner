@@ -1,8 +1,24 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "jsx-a11y", "import", "vitest"],
+  "plugins": ["react", "jsx-a11y", "import", "vitest", "promise", "unicorn"],
   "categories": { "correctness": "error", "suspicious": "warn" },
   "env": { "browser": true, "node": true, "es2022": true },
-  "rules": { "react/react-in-jsx-scope": "off", "react/jsx-filename-extension": "off", "jsx-a11y/prefer-tag-over-role": "off", "import/no-unassigned-import": "off", "vitest/expect-expect": ["error", { "assertFunctionNames": ["expect", "expectNoAxeViolations"] }] },
-  "ignorePatterns": ["dist/**", "coverage/**", "node_modules/**"]
+  "rules": {
+    "eqeqeq": "error",
+    "no-var": "error",
+    "prefer-const": "error",
+    "no-console": ["warn", { "allow": ["warn", "error", "log"] }],
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "no-new-func": "error",
+    "react/no-danger": "error",
+    "react/jsx-no-target-blank": "error",
+    "react/react-in-jsx-scope": "off",
+    "react/jsx-filename-extension": "off",
+    "jsx-a11y/prefer-tag-over-role": "off",
+    "import/no-unassigned-import": "off",
+    "unicorn/require-module-specifiers": "off",
+    "vitest/expect-expect": ["error", { "assertFunctionNames": ["expect", "expectNoAxeViolations"] }]
+  },
+  "ignorePatterns": ["dist/**", "coverage/**", "node_modules/**", "media/**"]
 }

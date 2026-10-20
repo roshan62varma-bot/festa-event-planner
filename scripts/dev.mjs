@@ -5,11 +5,14 @@
  */
 import { spawn } from 'node:child_process';
 
-const processes = [
-  ['api', process.execPath, ['--watch', '--env-file-if-exists=.env', 'server/index.js']],
-  ['web', process.execPath, ['node_modules/vite/bin/vite.js']],
-].map(([name, command, args]) => {
-  const child = spawn(command, args, { stdio: 'inherit', env: process.env });
+/** @type {[name: string, args: string[]][]} */
+const COMMANDS = [
+  ['api', ['--watch', '--env-file-if-exists=.env', 'server/index.js']],
+  ['web', ['node_modules/vite/bin/vite.js']],
+];
+
+const processes = COMMANDS.map(([name, args]) => {
+  const child = spawn(process.execPath, args, { stdio: 'inherit', env: process.env });
   child.on('exit', (code) => {
     console.log(`[dev] ${name} stopped${code ? ` with code ${code}` : ''}. Shutting down.`);
     shutdown(code ?? 0);

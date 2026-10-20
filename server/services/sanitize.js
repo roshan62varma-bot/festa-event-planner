@@ -14,7 +14,10 @@ const TIME = /^([01]?\d|2[0-3]):[0-5]\d$/;
 
 const text = (v, max = 400) => sanitizeText(typeof v === 'string' ? v : '', max);
 const list = (v, max) => (Array.isArray(v) ? v.slice(0, max) : []);
-const textList = (v, max, len = 200) => list(v, max).map((s) => text(s, len)).filter(Boolean);
+const textList = (v, max, len = 200) =>
+  list(v, max)
+    .map((s) => text(s, len))
+    .filter(Boolean);
 const clampNumber = (v, min, max, fallback) => {
   const n = Number(v);
   return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
@@ -57,7 +60,11 @@ export function sanitizeSchedule(raw, maxWeeks) {
       }))
       .filter((m) => m.title),
     runOfShow: list(plan.runOfShow, 14)
-      .map((r) => ({ time: TIME.test(r?.time) ? r.time.padStart(5, '0') : '', activity: text(r?.activity, 160), owner: text(r?.owner, 40) }))
+      .map((r) => ({
+        time: TIME.test(r?.time) ? r.time.padStart(5, '0') : '',
+        activity: text(r?.activity, 160),
+        owner: text(r?.owner, 40),
+      }))
       .filter((r) => r.activity),
     vendors: list(plan.vendors, 8)
       .map((v) => ({
@@ -80,7 +87,11 @@ export function sanitizeCreative(raw) {
     title: text(result.title, 80),
     intro: text(result.intro, 240),
     items: list(result.items, 12)
-      .map((item) => ({ heading: text(item?.heading, 120), body: text(item?.body, 1500), tags: textList(item?.tags, 4, 30) }))
+      .map((item) => ({
+        heading: text(item?.heading, 120),
+        body: text(item?.body, 1500),
+        tags: textList(item?.tags, 4, 30),
+      }))
       .filter((item) => item.heading && item.body),
   };
 }

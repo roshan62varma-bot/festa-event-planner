@@ -11,7 +11,12 @@ import { BUDGET_CATEGORIES, PRIORITIES } from '../../shared/constants.js';
  */
 
 const str = (description) => ({ type: 'string', description });
-const strList = (description, maxItems) => ({ type: 'array', items: { type: 'string' }, ...(maxItems && { maxItems }), description });
+const strList = (description, maxItems) => ({
+  type: 'array',
+  items: { type: 'string' },
+  ...(maxItems && { maxItems }),
+  description,
+});
 
 export const PLAN_SCHEMA = {
   type: 'object',
@@ -52,7 +57,10 @@ export const PLAN_SCHEMA = {
         properties: {
           title: str('Task in imperative form, e.g. "Book the venue".'),
           detail: str('One sentence on how to do it well.'),
-          weeksBefore: { type: 'number', description: 'Ideal completion, in weeks before the event. 0 means the week of.' },
+          weeksBefore: {
+            type: 'number',
+            description: 'Ideal completion, in weeks before the event. 0 means the week of.',
+          },
           priority: { type: 'string', enum: PRIORITIES },
           category: { type: 'string', enum: [...BUDGET_CATEGORIES.map((c) => c.id), 'guests', 'logistics'] },
         },

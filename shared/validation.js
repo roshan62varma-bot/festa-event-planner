@@ -38,10 +38,14 @@ export function toInteger(value) {
 /**
  * Validates the event brief. Used by the form (instant feedback) and by the API
  * (authoritative check), so both layers apply exactly the same rules.
- * @returns {{ ok: boolean, value: object, errors: Record<string, string> }}
+ * @param {unknown} raw Untrusted input.
+ * @param {{ today?: string }} [options] Dates before `today` are rejected.
+ * @returns {import('./types.js').Validation<import('./types.js').EventBrief>}
  */
 export function validateEventInput(raw, { today = toISODate(new Date()) } = {}) {
+  /** @type {Record<string, any>} */
   const input = raw && typeof raw === 'object' ? raw : {};
+  /** @type {Record<string, string>} */
   const errors = {};
 
   const type = idsOf(EVENT_TYPES).includes(input.type) ? input.type : '';
@@ -95,28 +99,38 @@ export function validateCreativeInput(raw) {
     tone: INVITE_TONES.includes(input.tone) ? input.tone : 'warm',
     vendorType: VENDOR_TYPES.includes(input.vendorType) ? input.vendorType : VENDOR_TYPES[0],
     extra: sanitizeText(input.extra, LIMITS.extraMax),
-    guestSummary: input.guestSummary && typeof input.guestSummary === 'object'
-      ? sanitizeGuestSummary(input.guestSummary)
-      : null,
+    guestSummary:
+      input.guestSummary && typeof input.guestSummary === 'object' ? sanitizeGuestSummary(input.guestSummary) : null,
   };
 
   return { ok: !errors.kind, value, errors };
 }
 
-/** Only aggregate, non-identifying numbers about guests ever reach the AI. */
+/** Bounds for the aggregate guest summary. */
+const SUMMARY_LIMITS = Object.freeze({ dietaryKinds: 12, dietaryLabelMax: 24, groupsMax: 100 });
+
+/** A non-negative whole count, capped at the largest guest list we accept. @param {unknown} n */
+const count = (n) => Math.max(0, Math.min(LIMITS.guestsMax, toInteger(n) || 0));
+
+/**
+ * Only aggregate, non-identifying numbers about guests ever reach the AI.
+ * Any other field (such as names) is dropped.
+ * @param {Record<string, any>} summary Untrusted input.
+ * @returns {import('./types.js').GuestSummary}
+ */
 export function sanitizeGuestSummary(summary) {
-  const count = (n) => Math.max(0, Math.min(LIMITS.guestsMax, toInteger(n) || 0));
+  /** @type {Record<string, number>} */
   const dietary = {};
   if (summary.dietary && typeof summary.dietary === 'object') {
-    for (const [key, n] of Object.entries(summary.dietary).slice(0, 12)) {
-      const label = sanitizeText(key, 24);
+    for (const [key, n] of Object.entries(summary.dietary).slice(0, SUMMARY_LIMITS.dietaryKinds)) {
+      const label = sanitizeText(key, SUMMARY_LIMITS.dietaryLabelMax);
       if (label) dietary[label] = count(n);
     }
   }
   return {
     attending: count(summary.attending),
     pending: count(summary.pending),
-    groups: Math.min(100, count(summary.groups)),
+    groups: Math.min(SUMMARY_LIMITS.groupsMax, count(summary.groups)),
     dietary,
   };
 }
