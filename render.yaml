@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: festa-event-planner
+    runtime: node
+    plan: free
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODELS
+        value: gemini-3.8-flash,gemini-3.5-flash-lite,gemini-3.6-flash
+      - key: GEMINI_THINKING_LEVEL
+        value: LOW
