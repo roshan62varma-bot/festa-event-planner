@@ -46,10 +46,9 @@ tests/       Vitest suites: shared/, server/, client/
 ```bash
 npm install
 cp .env.example .env          # add GEMINI_API_KEY from https://aistudio.google.com/apikey
+npm run dev                   # API on :8787 + Vite on http://localhost:5173 (hot reload)
+# or run the production build:
 npm run build && npm start    # http://localhost:8787
-# or, for development with hot reload, in two terminals:
-npm run dev:server            # API on :8787
-npm run dev                   # Vite on :5173, proxying /api
 npm test                      # unit, integration and accessibility tests
 npm run lint
 ```

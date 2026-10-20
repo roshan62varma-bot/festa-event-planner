@@ -23,7 +23,11 @@ async function post(path, body, { signal, timeoutMs = 75_000 } = {}) {
     if (err.name === 'TimeoutError') throw new ApiError('This is taking longer than usual. Try again in a moment.');
     throw new ApiError('Could not reach Festa. Check your connection and try again.');
   }
-  const data = await response.json().catch(() => ({}));
+  const data = await response.json().catch(() => null);
+  if (data === null) {
+    // A non-JSON reply means a proxy or host answered instead of the Festa API.
+    throw new ApiError('Could not reach the Festa server. Make sure it is running, then try again.', { status: response.status });
+  }
   if (!response.ok) {
     throw new ApiError(data.error || 'Something went wrong. Try again.', { status: response.status, fields: data.fields });
   }
