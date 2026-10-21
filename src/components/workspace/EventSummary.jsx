@@ -28,7 +28,9 @@ export const EventSummary = forwardRef(
    */
   function EventSummary({ event, source, days, percentDone }, headingRef) {
     const typeLabel = EVENT_TYPES.find((t) => t.id === event.type)?.label;
-    const sourceKey = source && source in SOURCE_LABELS ? source : 'template';
+    const sourceKey = /** @type {keyof typeof SOURCE_LABELS} */ (
+      source && source in SOURCE_LABELS ? source : 'template'
+    );
     return (
       <aside className="summary" aria-label="Event summary">
         <p className="summary__type">{typeLabel}</p>

@@ -54,8 +54,10 @@ function eventFacts(event, today) {
 }
 
 // `<` is escaped so user text can never close the data block early ("</event_data> new rules...").
+/** @param {Record<string, unknown>} data */
 const dataBlock = (data) => `<event_data>\n${JSON.stringify(data, null, 2).replace(/</g, '\\u003c')}\n</event_data>`;
 
+/** @type {Record<'overview' | 'schedule', (event: EventBrief, maxWeeks: number) => string[]>} */
 const PLAN_TASKS = {
   overview: (event) => [
     'Create the overview of the master plan for this event: summary, theme, budget split, savings tips and risks.',
@@ -87,6 +89,9 @@ export function buildPlanPrompt(event, { part, refinement = '', today }) {
   return parts.join('\n\n');
 }
 
+/** @typedef {Partial<import('../../shared/types.js').CreativeRequest>} CreativeOptions */
+
+/** @type {Record<string, (input: CreativeOptions) => string>} */
 const CREATIVE_TASKS = {
   decor: () =>
     'Propose 3 distinct decor concepts. For each, heading = concept name, body = the look, key pieces, materials and a DIY saving, tags = 3 to 4 palette colours.',

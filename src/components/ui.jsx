@@ -81,6 +81,7 @@ export function Button({
   );
 }
 
+/** @type {Record<string, string>} */
 const STATUS_LABELS = {
   done: 'Done',
   overdue: 'Overdue',

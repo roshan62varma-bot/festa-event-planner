@@ -48,7 +48,7 @@ The same `shared/` modules run in the browser (instant feedback, local budget ma
 
 ## Engineering notes
 
-**Code quality:** small, single-purpose modules. The server is split into config, security, routes, client serving and errors; the UI into focused components, hooks (`useLatestRequest`, `usePlanInsights`, `usePlanner`) and named action creators. Shared JSDoc types (`shared/types.js`) are checked across the whole codebase with `npm run typecheck`. Prettier and EditorConfig keep formatting consistent; oxlint runs with warnings treated as errors. A GitHub Actions workflow runs format, lint, type check, tests with coverage thresholds, build and audit on Node 22 and 24.
+**Code quality:** small, single-purpose modules. The server is split into config, security, routes, client serving and errors; the UI into focused components, hooks (`useLatestRequest`, `usePlanInsights`, `usePlanner`) and named action creators. Shared JSDoc types (`shared/types.js`) are checked across the whole codebase in TypeScript `strict` mode with `npm run typecheck`, with no implicit `any` and full null checks. Tuning values (temperatures, limits, rate windows) are named constants, and template copy lives in `fallback-content.js`, apart from the logic. Prettier and EditorConfig keep formatting consistent; oxlint runs with warnings treated as errors. A GitHub Actions workflow runs format, lint, type check, tests with coverage thresholds, build and audit on Node 22 and 24.
 
 **Security:** see [SECURITY.md](SECURITY.md). Helmet with a strict CSP (`script-src 'self'`, `frame-ancestors 'none'`) and a Permissions-Policy; per-client rate limits (120/min on the API, 15/min on generation); a 16 KB body limit; JSON-only request bodies; request timeouts; and shared validation that runs on both the client and the server. Model output is treated as untrusted: text is clamped, lists bounded, enums enforced, and budget arithmetic recomputed. There is no `dangerouslySetInnerHTML` (lint-enforced), and palette colours are applied only if they match `#rrggbb`. Errors never expose stack traces. Only aggregate, name-free guest counts are ever sent to the AI, and saved browser state is validated key by key on load.
 
@@ -86,7 +86,7 @@ server/
   config.js        Environment parsing with safe defaults
   http/            security.js, routes.js, client.js (static files), errors.js
   ai/              gemini.js (client), prompts.js, schemas.js
-  services/        planner.js (orchestration), sanitize.js, fallback.js
+  services/        planner.js (orchestration), sanitize.js, fallback.js + fallback-content.js
   lib/cache.js     TTL LRU cache
 src/
   App.jsx          Shell: brief form or workspace

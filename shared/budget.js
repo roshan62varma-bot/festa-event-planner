@@ -1,6 +1,11 @@
 import { BUDGET_CATEGORIES } from './constants.js';
 
+/** @typedef {import('./types.js').BudgetCategory} BudgetCategory */
+/** @typedef {'on-track' | 'near' | 'over'} BudgetStatus */
+
 const CATEGORY_IDS = BUDGET_CATEGORIES.map((c) => c.id);
+/** Share of a line's plan at which it is flagged as nearly spent. */
+const NEAR_LIMIT_RATIO = 0.9;
 const LABELS = Object.fromEntries(BUDGET_CATEGORIES.map((c) => [c.id, c.label]));
 
 /**
@@ -41,21 +46,25 @@ export function allocate(total, weights) {
  * @returns {import('./types.js').BudgetCategory[]}
  */
 export function normalizeCategories(categories, total) {
+  /** @type {Map<string, Record<string, any>>} */
   const byId = new Map();
   for (const cat of Array.isArray(categories) ? categories : []) {
     if (cat && CATEGORY_IDS.includes(cat.id) && !byId.has(cat.id)) byId.set(cat.id, cat);
   }
   const weights = Object.fromEntries(CATEGORY_IDS.map((id) => [id, Number(byId.get(id)?.amount) || 0]));
   const amounts = allocate(total, weights);
-  return CATEGORY_IDS.map((id) => ({
-    id,
-    label: LABELS[id],
-    amount: amounts[id],
-    rationale: typeof byId.get(id)?.rationale === 'string' ? byId.get(id).rationale : '',
-  }));
+  return CATEGORY_IDS.map((id) => {
+    const rationale = byId.get(id)?.rationale;
+    return { id, label: LABELS[id], amount: amounts[id], rationale: typeof rationale === 'string' ? rationale : '' };
+  });
 }
 
-/** Scales every category to a new total while keeping their proportions. */
+/**
+ * Scales every category to a new total while keeping their proportions.
+ * @param {BudgetCategory[]} categories
+ * @param {number} newTotal
+ * @returns {BudgetCategory[]}
+ */
 export function rescaleCategories(categories, newTotal) {
   const amounts = allocate(newTotal, Object.fromEntries(categories.map((c) => [c.id, c.amount])));
   return categories.map((c) => ({ ...c, amount: amounts[c.id] }));
@@ -64,7 +73,7 @@ export function rescaleCategories(categories, newTotal) {
 /**
  * Compares planned amounts with what has actually been spent.
  * A line is "near" its limit from 90% and "over" beyond 100%.
- * @param {import('./types.js').BudgetCategory[]} categories
+ * @param {BudgetCategory[]} categories
  * @param {Record<string, number>} [spent] Actual spend by category id.
  * @param {number} [total] The host's total budget; defaults to the sum of the lines.
  */
@@ -72,9 +81,10 @@ export function summarizeBudget(categories, spent = {}, total = sumAmounts(categ
   const rows = categories.map((c) => {
     const actual = Math.max(0, Number(spent[c.id]) || 0);
     const ratio = c.amount > 0 ? actual / c.amount : actual > 0 ? Infinity : 0;
+    /** @type {BudgetStatus} */
     let status = 'on-track';
     if (ratio > 1) status = 'over';
-    else if (ratio >= 0.9) status = 'near';
+    else if (ratio >= NEAR_LIMIT_RATIO) status = 'near';
     return { ...c, actual, remaining: c.amount - actual, ratio, status };
   });
   const totalSpent = rows.reduce((sum, r) => sum + r.actual, 0);
@@ -87,20 +97,30 @@ export function summarizeBudget(categories, spent = {}, total = sumAmounts(categ
     remaining: total - totalSpent,
     unallocated: total - planned,
     overCategories: rows.filter((r) => r.status === 'over').map((r) => r.label),
-    status: totalSpent > total ? 'over' : totalSpent >= total * 0.9 ? 'near' : 'on-track',
+    status: /** @type {BudgetStatus} */ (
+      totalSpent > total ? 'over' : totalSpent >= total * NEAR_LIMIT_RATIO ? 'near' : 'on-track'
+    ),
   };
 }
 
+/** @param {BudgetCategory[]} categories */
 export function sumAmounts(categories) {
   return categories.reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
 }
 
+/** @type {Map<string, Intl.NumberFormat>} */
 const formatters = new Map();
 
-/** Formats money with a cached Intl.NumberFormat per currency. */
+/**
+ * Formats money with a cached Intl.NumberFormat per currency.
+ * @param {number} amount
+ * @param {string} currency ISO 4217 code.
+ */
 export function formatMoney(amount, currency) {
-  if (!formatters.has(currency)) {
-    formatters.set(currency, new Intl.NumberFormat('en', { style: 'currency', currency, maximumFractionDigits: 0 }));
+  let formatter = formatters.get(currency);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat('en', { style: 'currency', currency, maximumFractionDigits: 0 });
+    formatters.set(currency, formatter);
   }
-  return formatters.get(currency).format(Math.round(amount));
+  return formatter.format(Math.round(amount));
 }

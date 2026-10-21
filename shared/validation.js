@@ -1,11 +1,15 @@
 import { CREATIVE_KINDS, CURRENCIES, EVENT_TYPES, INVITE_TONES, LIMITS, VENDOR_TYPES, idsOf } from './constants.js';
 
 // Control characters (except tab and newline) are stripped from every text field.
-// eslint-disable-next-line no-control-regex
+// oxlint-disable-next-line no-control-regex -- matching control characters is the point
 const CONTROL_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Normalises untrusted text: strips control chars, collapses spaces, trims, caps length. */
+/**
+ * Normalises untrusted text: strips control chars, collapses spaces, trims, caps length.
+ * @param {unknown} value Returns '' for anything that is not a string.
+ * @param {number} maxLength
+ */
 export function sanitizeText(value, maxLength) {
   if (typeof value !== 'string') return '';
   return value
@@ -16,6 +20,7 @@ export function sanitizeText(value, maxLength) {
     .slice(0, maxLength);
 }
 
+/** Local calendar date as YYYY-MM-DD. @param {Date} date */
 export function toISODate(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -23,6 +28,7 @@ export function toISODate(date) {
   return `${y}-${m}-${d}`;
 }
 
+/** True for a real calendar date in YYYY-MM-DD form (rejects 2025-02-30). @param {unknown} value */
 export function isValidISODate(value) {
   if (typeof value !== 'string' || !ISO_DATE.test(value)) return false;
   const [y, m, d] = value.split('-').map(Number);
@@ -30,6 +36,10 @@ export function isValidISODate(value) {
   return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d;
 }
 
+/**
+ * Parses a whole number, accepting "1,500" and " 12 ". Returns NaN for blanks and booleans.
+ * @param {unknown} value
+ */
 export function toInteger(value) {
   const n = typeof value === 'string' ? Number(value.replace(/[, ]/g, '')) : Number(value);
   return typeof value !== 'boolean' && value !== '' && value !== null && Number.isFinite(n) ? Math.round(n) : NaN;
@@ -86,9 +96,15 @@ export function validateEventInput(raw, { today = toISODate(new Date()) } = {}) 
   return { ok: Object.keys(errors).length === 0, value, errors };
 }
 
-/** Validates a creative studio request. Invalid optional fields fall back to safe defaults. */
+/**
+ * Validates a creative studio request. Invalid optional fields fall back to safe defaults.
+ * @param {unknown} raw Untrusted input.
+ * @returns {import('./types.js').Validation<import('./types.js').CreativeRequest>}
+ */
 export function validateCreativeInput(raw) {
+  /** @type {Record<string, any>} */
   const input = raw && typeof raw === 'object' ? raw : {};
+  /** @type {Record<string, string>} */
   const errors = {};
 
   const kind = idsOf(CREATIVE_KINDS).includes(input.kind) ? input.kind : '';

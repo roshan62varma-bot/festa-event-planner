@@ -2,6 +2,7 @@ import { Trash2 } from 'lucide-react';
 import { DIETARY_OPTIONS, RSVP_STATUSES } from '../../../shared/constants.js';
 
 /** @typedef {import('../../../shared/types.js').Guest} Guest */
+/** @typedef {import('../../../shared/types.js').SavedGuest} SavedGuest */
 
 /**
  * @param {{ label: string, value: string, options: readonly { id: string, label: string }[], onChange: (value: string) => void }} props
@@ -21,9 +22,9 @@ function InlineSelect({ label, value, options, onChange }) {
 /**
  * Editable guest list: RSVP and dietary need can be changed in place.
  * @param {object} props
- * @param {Guest[]} props.guests
+ * @param {SavedGuest[]} props.guests
  * @param {(id: string, patch: Partial<Guest>) => void} props.onUpdate
- * @param {(guest: Guest) => void} props.onRemove
+ * @param {(guest: SavedGuest) => void} props.onRemove
  */
 export function GuestTable({ guests, onUpdate, onRemove }) {
   return (

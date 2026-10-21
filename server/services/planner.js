@@ -7,6 +7,18 @@ import { buildFallbackCreative, buildFallbackPlan } from './fallback.js';
 import { sanitizeCreative, sanitizeOverview, sanitizeSchedule } from './sanitize.js';
 
 /**
+ * Sampling temperatures: the schedule stays closest to proven practice, the
+ * overview has a little more freedom, and creative ideas should vary between runs.
+ */
+const TEMPERATURE = Object.freeze({ schedule: 0.6, overview: 0.7, creative: 0.95 });
+
+/** @param {unknown} err */
+const reason = (err) => {
+  const error = err instanceof Error && err.cause instanceof Error ? err.cause : err;
+  return error instanceof Error ? error.message : String(error);
+};
+
+/**
  * Rejects structurally valid but empty model output so the fallback is used instead.
  * @template T
  * @param {T} value
@@ -79,7 +91,7 @@ export function createPlanner({ ai, cache = createCache(), logger = console, clo
         cache.set(key, result);
         return { ...result, cached: false };
       } catch (err) {
-        logger.warn?.(`[planner] Gemini unavailable, using fallback: ${err.cause?.message ?? err.message}`);
+        logger.warn?.(`[planner] Gemini unavailable, using fallback: ${reason(err)}`);
       }
     }
     // Fallbacks are not cached, so the next request retries Gemini.
@@ -106,7 +118,7 @@ export function createPlanner({ ai, cache = createCache(), logger = console, clo
           system: PLAN_SYSTEM,
           prompt: buildPlanPrompt(event, { part: 'overview', refinement, today }),
           schema: PLAN_PART_SCHEMAS.overview,
-          temperature: 0.7,
+          temperature: TEMPERATURE.overview,
           sanitize: (raw) => requireContent(sanitizeOverview(raw, event), (p) => p.summary),
           fallback: () => {
             const { summary, theme, budget, watchouts } = fallbackPlan();
@@ -118,7 +130,7 @@ export function createPlanner({ ai, cache = createCache(), logger = console, clo
           system: PLAN_SYSTEM,
           prompt: buildPlanPrompt(event, { part: 'schedule', refinement, today }),
           schema: PLAN_PART_SCHEMAS.schedule,
-          temperature: 0.6,
+          temperature: TEMPERATURE.schedule,
           sanitize: (raw) => requireContent(sanitizeSchedule(raw, maxWeeks), (p) => p.milestones.length),
           fallback: () => {
             const { milestones, runOfShow, vendors } = fallbackPlan();
@@ -147,7 +159,7 @@ export function createPlanner({ ai, cache = createCache(), logger = console, clo
         system: CREATIVE_SYSTEM,
         prompt: buildCreativePrompt(event, input, { today }),
         schema: CREATIVE_SCHEMA,
-        temperature: 0.95,
+        temperature: TEMPERATURE.creative,
         sanitize: (raw) => requireContent(sanitizeCreative(raw), (r) => r.items.length),
         fallback: () => buildFallbackCreative(event, input),
         fresh,

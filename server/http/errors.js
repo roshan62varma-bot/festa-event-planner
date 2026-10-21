@@ -1,3 +1,4 @@
+/** @type {Record<number, string>} */
 const CLIENT_MESSAGES = {
   404: 'Not found.',
   413: 'That request is too large.',
@@ -12,9 +13,8 @@ const CLIENT_MESSAGES = {
  * @returns {import('express').ErrorRequestHandler}
  */
 export function errorHandler(logger = console) {
-  // Express recognises error handlers by their four parameters, so `next` must stay.
-  // eslint-disable-next-line no-unused-vars
-  return (err, req, res, next) => {
+  // Express recognises error handlers by their four parameters, so `_next` must stay.
+  return (err, req, res, _next) => {
     const status = Number.isInteger(err?.status) && err.status >= 400 && err.status < 500 ? err.status : 500;
     if (status === 500) logger.error('[server]', err);
     const message =

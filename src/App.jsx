@@ -5,6 +5,7 @@ import { Workspace } from './components/Workspace.jsx';
 import { useLatestRequest } from './hooks/useLatestRequest.js';
 import { usePlanner } from './hooks/usePlanner.js';
 import { actions } from './state/actions.js';
+import { hasPlan } from './state/plannerReducer.js';
 
 const RESET_CONFIRMATION = 'Start a new event? Your current plan, budget and guest list will be cleared.';
 
@@ -40,7 +41,7 @@ export default function App() {
             <PartyPopper aria-hidden="true" size={22} strokeWidth={1.8} />
             <span>Festa</span>
           </a>
-          {state.plan && (
+          {hasPlan(state) && (
             <button type="button" className="btn btn--ghost btn--sm no-print" onClick={startOver}>
               New event
             </button>
@@ -49,7 +50,7 @@ export default function App() {
       </header>
 
       <main id="main" className="main">
-        {state.plan ? (
+        {hasPlan(state) ? (
           <Workspace
             state={state}
             dispatch={dispatch}

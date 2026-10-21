@@ -21,6 +21,7 @@ const processes = COMMANDS.map(([name, args]) => {
 });
 
 let stopping = false;
+/** Stops every child process, then exits with `code`. @param {number} code */
 function shutdown(code) {
   if (stopping) return;
   stopping = true;

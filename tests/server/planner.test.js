@@ -52,6 +52,17 @@ describe('fallback content', () => {
     expect(sumAmounts(plan.budget.categories)).toBe(validEvent.budget);
   });
 
+  it('returns fresh copies, so editing one plan never changes the template', () => {
+    const first = buildFallbackPlan(validEvent, { maxWeeks: 4 });
+    first.watchouts.push('Edited');
+    first.runOfShow[0].activity = 'Edited';
+    first.theme.palette.length = 0;
+    const second = buildFallbackPlan(validEvent, { maxWeeks: 4 });
+    expect(second.watchouts).not.toContain('Edited');
+    expect(second.runOfShow[0].activity).not.toBe('Edited');
+    expect(second.theme.palette.length).toBeGreaterThan(0);
+  });
+
   it('has starter ideas for every creative kind', () => {
     for (const { id } of CREATIVE_KINDS) {
       const ideas = buildFallbackCreative(validEvent, { kind: id });

@@ -21,7 +21,7 @@ const ICON_SIZE = 18;
 /**
  * The plan workspace: event summary and tools on the left, six tabs on the right.
  * @param {object} props
- * @param {import('../state/plannerReducer.js').PlannerState} props.state A state with a loaded plan.
+ * @param {import('../state/plannerReducer.js').LoadedPlannerState} props.state
  * @param {import('../state/actions.js').Dispatch} props.dispatch
  * @param {(refinement: string) => void} props.onRefine
  * @param {boolean} props.refining

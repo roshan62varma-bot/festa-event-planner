@@ -9,15 +9,20 @@ const MISSING_MODEL = /\b404\b|NOT_FOUND|is not found|no longer available/i;
 // A bad or unauthorised key fails the same way on every model, so stop early.
 const AUTH_FAILURE = /\b(401|403)\b|API key|PERMISSION_DENIED|UNAUTHENTICATED/i;
 
+/** Every configured model failed; `cause` holds the last model's error. */
 export class AIUnavailableError extends Error {
+  /** @param {string} message @param {unknown} [cause] */
   constructor(message, cause) {
-    super(message);
+    super(message, { cause });
     this.name = 'AIUnavailableError';
-    this.cause = cause;
   }
 }
 
-/** Parses model output as JSON, tolerating stray markdown fences. Returns null if it cannot. */
+/**
+ * Parses model output as JSON, tolerating stray markdown fences. Returns null if it cannot.
+ * @param {unknown} text
+ * @returns {unknown}
+ */
 export function parseModelJSON(text) {
   if (typeof text !== 'string' || !text.trim()) return null;
   const stripped = text
@@ -93,13 +98,15 @@ export function createGeminiClient({
   const order = () => {
     const t = now();
     const usable = models.filter((m) => !unavailable.has(m));
-    return [...usable.filter((m) => !(coolingUntil.get(m) > t)), ...usable.filter((m) => coolingUntil.get(m) > t)];
+    const cooling = (/** @type {string} */ m) => (coolingUntil.get(m) ?? 0) > t;
+    return [...usable.filter((m) => !cooling(m)), ...usable.filter(cooling)];
   };
 
   /** @type {AIClient['generateJSON']} */
   async function generateJSON({ system, prompt, schema, temperature = 0.8 }) {
     let lastError;
     const deadline = now() + deadlineMs;
+    // Sequential on purpose: each model is a fallback for the one before it.
     for (const model of order()) {
       const remaining = deadline - now();
       if (remaining <= MIN_ATTEMPT_MS) break;
@@ -127,7 +134,7 @@ export function createGeminiClient({
         lastError = new Error(`Model ${model} returned unparseable JSON`);
       } catch (err) {
         lastError = err;
-        const message = String(err?.message ?? err);
+        const message = err instanceof Error ? err.message : String(err);
         if (AUTH_FAILURE.test(message)) break;
         if (MISSING_MODEL.test(message)) unavailable.add(model);
         else coolingUntil.set(model, now() + COOLDOWN_MS);

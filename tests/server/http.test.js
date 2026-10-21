@@ -66,6 +66,11 @@ describe('loadConfig', () => {
     });
     expect(config).toMatchObject({ port: 8787, models: DEFAULT_MODELS, thinkingLevel: 'LOW', trustProxy: 1 });
   });
+
+  it('treats blank values as unset and never allows a zero rate limit', () => {
+    const config = loadConfig({ PORT: '  ', TRUST_PROXY: '', RATE_LIMIT_PER_MINUTE: '0' });
+    expect(config).toMatchObject({ port: 8787, trustProxy: 1, rateLimitPerMinute: 15 });
+  });
 });
 
 describe('request hardening', () => {

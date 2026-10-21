@@ -12,20 +12,32 @@ import { sanitizeText } from '../../shared/validation.js';
 const CATEGORY_IDS = new Set([...BUDGET_CATEGORIES.map((c) => c.id), 'guests', 'logistics']);
 const TIME = /^([01]?\d|2[0-3]):[0-5]\d$/;
 
+/** @typedef {import('../../shared/types.js').EventBrief} EventBrief */
+
+/** @param {unknown} v @param {number} [max] */
 const text = (v, max = 400) => sanitizeText(typeof v === 'string' ? v : '', max);
+/** @param {unknown} v @param {number} max @returns {any[]} */
 const list = (v, max) => (Array.isArray(v) ? v.slice(0, max) : []);
+/** @param {unknown} v @param {number} max @param {number} [len] */
 const textList = (v, max, len = 200) =>
   list(v, max)
     .map((s) => text(s, len))
     .filter(Boolean);
+/** @param {unknown} v @param {number} min @param {number} max @param {number} fallback */
 const clampNumber = (v, min, max, fallback) => {
   const n = Number(v);
   return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
 };
 
+/** @param {unknown} raw @returns {Record<string, any>} */
 const asObject = (raw) => (raw && typeof raw === 'object' ? raw : {});
 
-/** The overview half of a plan: summary, theme, budget and risks. */
+/**
+ * The overview half of a plan: summary, theme, budget and risks.
+ * @param {unknown} raw Model output.
+ * @param {EventBrief} event
+ * @returns {Pick<import('../../shared/types.js').Plan, 'summary' | 'theme' | 'budget' | 'watchouts'>}
+ */
 export function sanitizeOverview(raw, event) {
   const plan = asObject(raw);
   return {
@@ -45,7 +57,12 @@ export function sanitizeOverview(raw, event) {
   };
 }
 
-/** The schedule half of a plan: milestones, run of show and vendors. */
+/**
+ * The schedule half of a plan: milestones, run of show and vendors.
+ * @param {unknown} raw Model output.
+ * @param {number} maxWeeks Weeks between today and the event.
+ * @returns {Pick<import('../../shared/types.js').Plan, 'milestones' | 'runOfShow' | 'vendors'>}
+ */
 export function sanitizeSchedule(raw, maxWeeks) {
   const plan = asObject(raw);
   return {
@@ -77,12 +94,22 @@ export function sanitizeSchedule(raw, maxWeeks) {
   };
 }
 
+/**
+ * A complete plan from one model response.
+ * @param {unknown} raw @param {EventBrief} event @param {number} maxWeeks
+ * @returns {import('../../shared/types.js').Plan}
+ */
 export function sanitizePlan(raw, event, maxWeeks) {
   return { ...sanitizeOverview(raw, event), ...sanitizeSchedule(raw, maxWeeks) };
 }
 
+/**
+ * A set of creative ideas.
+ * @param {unknown} raw Model output.
+ * @returns {import('../../shared/types.js').Ideas}
+ */
 export function sanitizeCreative(raw) {
-  const result = raw && typeof raw === 'object' ? raw : {};
+  const result = asObject(raw);
   return {
     title: text(result.title, 80),
     intro: text(result.intro, 240),

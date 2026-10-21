@@ -92,6 +92,11 @@
  */
 
 /**
+ * A guest on the saved list, which always has a stable id.
+ * @typedef {Guest & { id: string }} SavedGuest
+ */
+
+/**
  * Aggregate, name-free guest numbers: the only guest data ever sent to the AI.
  * @typedef {object} GuestSummary
  * @property {number} attending

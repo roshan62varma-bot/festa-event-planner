@@ -1,6 +1,7 @@
 import { Cake, Gem, Heart, Laptop, Sparkles, Users } from 'lucide-react';
 import { EVENT_TYPES } from '../../shared/constants.js';
 
+/** @type {Record<string, import('lucide-react').LucideIcon>} */
 const ICONS = {
   wedding: Gem,
   birthday: Cake,

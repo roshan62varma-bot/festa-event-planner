@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+/** @typedef {{ busy: boolean, error: string, fields: Record<string, string> }} RequestState */
+
+/** @type {RequestState} */
+const IDLE = Object.freeze({ busy: false, error: '', fields: {} });
+
 /**
  * Runs async requests where only the latest one matters. Starting a new request
  * aborts the previous one, unmounting aborts the current one, and aborted
@@ -15,26 +20,27 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  */
 export function useLatestRequest() {
   const controllerRef = useRef(/** @type {AbortController | null} */ (null));
-  const [state, setState] = useState({ busy: false, error: '', fields: {} });
+  const [state, setState] = useState(IDLE);
 
   const cancel = useCallback(() => {
     controllerRef.current?.abort();
     controllerRef.current = null;
-    setState({ busy: false, error: '', fields: {} });
+    setState(IDLE);
   }, []);
 
-  const run = useCallback(async (request) => {
+  const run = useCallback(async (/** @type {(signal: AbortSignal) => Promise<any>} */ request) => {
     controllerRef.current?.abort();
     const controller = new AbortController();
     controllerRef.current = controller;
     setState({ busy: true, error: '', fields: {} });
     try {
       const result = await request(controller.signal);
-      if (!controller.signal.aborted) setState({ busy: false, error: '', fields: {} });
+      if (!controller.signal.aborted) setState(IDLE);
       return result;
     } catch (err) {
       if (controller.signal.aborted) return undefined;
-      setState({ busy: false, error: err.message, fields: err.fields ?? {} });
+      const { message, fields } = /** @type {{ message?: string, fields?: Record<string, string> }} */ (err ?? {});
+      setState({ busy: false, error: message ?? '', fields: fields ?? {} });
       return undefined;
     }
   }, []);

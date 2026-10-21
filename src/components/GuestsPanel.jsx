@@ -8,6 +8,7 @@ import { SeatingPlan } from './guests/SeatingPlan.jsx';
 import { Button, EmptyState, SectionHeading, Stat } from './ui.jsx';
 
 /** @typedef {import('../../shared/types.js').Guest} Guest */
+/** @typedef {import('../../shared/types.js').SavedGuest} SavedGuest */
 
 const DIETARY_LABEL = Object.fromEntries(DIETARY_OPTIONS.map((d) => [d.id, d.label]));
 
@@ -23,7 +24,7 @@ export const caterNote = (dietary) =>
 /**
  * RSVP tracking, dietary totals and suggested seating.
  * @param {object} props
- * @param {Guest[]} props.guests
+ * @param {SavedGuest[]} props.guests
  * @param {number} props.tableSize
  * @param {number} props.expected Guest count from the brief.
  * @param {import('../state/actions.js').Dispatch} props.dispatch
@@ -42,7 +43,7 @@ export function GuestsPanel({ guests, tableSize, expected, dispatch, onWriteInvi
     setAnnouncement(`${guest.name} added.`);
   }
 
-  /** @param {Guest} guest */
+  /** @param {SavedGuest} guest */
   function remove(guest) {
     dispatch(actions.guestRemoved(guest.id));
     setAnnouncement(`${guest.name} removed.`);

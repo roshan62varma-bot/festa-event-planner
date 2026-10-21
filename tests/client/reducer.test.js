@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { initialState, plannerReducer, restoreState } from '../../src/state/plannerReducer.js';
+import { hasPlan, initialState, plannerReducer, restoreState } from '../../src/state/plannerReducer.js';
 import { actions } from '../../src/state/actions.js';
 import { sanitizePlan } from '../../server/services/sanitize.js';
 import { sumAmounts } from '../../shared/budget.js';
@@ -7,6 +7,14 @@ import { geminiPlan, validEvent } from '../fixtures.js';
 
 const plan = sanitizePlan(geminiPlan(), validEvent, 12);
 const loaded = plannerReducer(initialState, { type: 'plan/loaded', event: validEvent, plan, source: 'gemini' });
+
+describe('hasPlan', () => {
+  it('is true only once both the event and the plan are present', () => {
+    expect(hasPlan(initialState)).toBe(false);
+    expect(hasPlan({ ...initialState, plan })).toBe(false);
+    expect(hasPlan(loaded)).toBe(true);
+  });
+});
 
 describe('plannerReducer', () => {
   it('loads a plan and copies the budget categories', () => {

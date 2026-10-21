@@ -5,6 +5,8 @@ import { apiLimiter, generationLimiter, requireJson } from './security.js';
 
 /** Ideas can be requested for an event that is already under way, so any date is accepted. */
 const ANY_DATE = '0000-01-01';
+/** A brief is well under 4 KB, so anything near this is not a real request. */
+const BODY_LIMIT = '16kb';
 
 /**
  * Wraps an async route so rejected promises reach the error handler.
@@ -29,7 +31,7 @@ export function createApiRouter({ planner, aiEnabled, clock, rateLimitPerMinute 
 
   api.use(apiLimiter());
   api.use(requireJson);
-  api.use(express.json({ limit: '16kb' }));
+  api.use(express.json({ limit: BODY_LIMIT }));
   api.use((req, res, next) => {
     res.set('Cache-Control', 'no-store');
     next();

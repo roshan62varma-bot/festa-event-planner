@@ -7,7 +7,7 @@ import { ActionType } from './actions.js';
  * user interaction easy to unit test and simple to persist.
  */
 
-/** @typedef {import('../../shared/types.js').Guest} Guest */
+/** @typedef {import('../../shared/types.js').SavedGuest} SavedGuest */
 
 /**
  * @typedef {object} PlannerState
@@ -18,10 +18,22 @@ import { ActionType } from './actions.js';
  * @property {Record<string, number>} spent Actual spend by category id.
  * @property {Record<string, boolean>} done Completed milestone ids.
  * @property {Record<string, boolean>} booked Booked vendor ids.
- * @property {Guest[]} guests
+ * @property {SavedGuest[]} guests
  * @property {number} tableSize
  * @property {Record<string, import('../../shared/types.js').Ideas & { source: string }>} ideas Latest result per kind.
  */
+
+/**
+ * The state once a plan exists, which is all the workspace ever sees.
+ * @typedef {PlannerState & { event: import('../../shared/types.js').EventBrief, plan: import('../../shared/types.js').Plan }} LoadedPlannerState
+ */
+
+/**
+ * True once a plan has been generated or restored.
+ * @param {PlannerState} state
+ * @returns {state is LoadedPlannerState}
+ */
+export const hasPlan = (state) => Boolean(state.plan && state.event);
 
 /** Bump the version when the saved shape changes, so old data is ignored. */
 export const STORAGE_KEY = 'festa:v1';

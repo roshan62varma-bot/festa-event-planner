@@ -10,7 +10,9 @@ import { BUDGET_CATEGORIES, PRIORITIES } from '../../shared/constants.js';
  * are requested in the prompt and enforced by the sanitiser instead.
  */
 
+/** @param {string} description */
 const str = (description) => ({ type: 'string', description });
+/** @param {string} description @param {number} [maxItems] */
 const strList = (description, maxItems) => ({
   type: 'array',
   items: { type: 'string' },
@@ -97,6 +99,7 @@ export const PLAN_SCHEMA = {
   required: ['summary', 'theme', 'budget', 'milestones', 'runOfShow', 'vendors', 'watchouts'],
 };
 
+/** @param {(keyof typeof PLAN_SCHEMA.properties)[]} keys */
 const pick = (keys) => ({
   type: 'object',
   properties: Object.fromEntries(keys.map((k) => [k, PLAN_SCHEMA.properties[k]])),

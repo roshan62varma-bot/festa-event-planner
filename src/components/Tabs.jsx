@@ -9,7 +9,10 @@ import { useRef } from 'react';
  * @property {number} [count] Items needing attention, shown as a badge.
  */
 
-/** Keys that move between tabs, mapped to the index they move to. */
+/**
+ * Keys that move between tabs, mapped to the index they move to.
+ * @type {Record<string, (index: number, last: number) => number>}
+ */
 const KEY_TARGETS = {
   ArrowRight: (index, last) => (index === last ? 0 : index + 1),
   ArrowLeft: (index, last) => (index === 0 ? last : index - 1),

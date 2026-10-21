@@ -1,6 +1,14 @@
 import { DEFAULT_MODELS } from './ai/gemini.js';
 
-const THINKING_LEVELS = ['MINIMAL', 'LOW', 'MEDIUM', 'HIGH'];
+const THINKING_LEVELS = new Set(['MINIMAL', 'LOW', 'MEDIUM', 'HIGH']);
+
+export const DEFAULTS = Object.freeze({
+  port: 8787,
+  thinkingLevel: 'LOW',
+  /** Render, like most hosts, puts one proxy in front of the app. */
+  trustProxy: 1,
+  rateLimitPerMinute: 15,
+});
 
 /**
  * @typedef {object} ServerConfig
@@ -12,9 +20,15 @@ const THINKING_LEVELS = ['MINIMAL', 'LOW', 'MEDIUM', 'HIGH'];
  * @property {number} rateLimitPerMinute Generation requests allowed per client per minute.
  */
 
-const positiveInt = (value, fallback) => {
+/**
+ * A whole number of at least `min`, or `fallback` if the value is missing or invalid.
+ * @param {string | undefined} value
+ * @param {number} fallback
+ * @param {number} [min]
+ */
+const intAtLeast = (value, fallback, min = 0) => {
   const n = Number(value);
-  return Number.isInteger(n) && n >= 0 ? n : fallback;
+  return value?.trim() && Number.isInteger(n) && n >= min ? n : fallback;
 };
 
 /**
@@ -31,11 +45,12 @@ export function loadConfig(env = process.env) {
   const thinkingLevel = (env.GEMINI_THINKING_LEVEL ?? '').trim().toUpperCase();
 
   return {
-    port: positiveInt(env.PORT, 8787),
+    port: intAtLeast(env.PORT, DEFAULTS.port),
     apiKey: env.GEMINI_API_KEY?.trim() || null,
     models: models.length ? models : DEFAULT_MODELS,
-    thinkingLevel: THINKING_LEVELS.includes(thinkingLevel) ? thinkingLevel : 'LOW',
-    trustProxy: positiveInt(env.TRUST_PROXY, 1),
-    rateLimitPerMinute: positiveInt(env.RATE_LIMIT_PER_MINUTE, 15) || 15,
+    thinkingLevel: THINKING_LEVELS.has(thinkingLevel) ? thinkingLevel : DEFAULTS.thinkingLevel,
+    trustProxy: intAtLeast(env.TRUST_PROXY, DEFAULTS.trustProxy),
+    // Zero would block every generation request, so the limit must be at least one.
+    rateLimitPerMinute: intAtLeast(env.RATE_LIMIT_PER_MINUTE, DEFAULTS.rateLimitPerMinute, 1),
   };
 }

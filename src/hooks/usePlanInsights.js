@@ -6,7 +6,7 @@ import { daysUntil, priorityAlerts, progress, scheduleMilestones } from '../../s
  * Everything the workspace derives from saved state: the budget summary,
  * the scheduled checklist, urgent alerts, progress and the countdown.
  * Memoised so typing elsewhere never recomputes them.
- * @param {import('../state/plannerReducer.js').PlannerState} state Must contain a loaded plan.
+ * @param {import('../state/plannerReducer.js').LoadedPlannerState} state
  */
 export function usePlanInsights({ event, plan, categories, spent, done }) {
   const budget = useMemo(() => summarizeBudget(categories, spent, event.budget), [categories, spent, event.budget]);

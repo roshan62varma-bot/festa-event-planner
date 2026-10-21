@@ -46,9 +46,17 @@ export function securityHeaders() {
   ];
 }
 
+const RATE_WINDOW_MS = 60_000;
+const DEFAULT_API_LIMIT = 120;
+
+/**
+ * Per-client fixed-window limiter that answers with a JSON error.
+ * @param {number} limit Requests per client per minute.
+ * @param {string} error Message shown to the user.
+ */
 const limiter = (limit, error) =>
   rateLimit({
-    windowMs: 60_000,
+    windowMs: RATE_WINDOW_MS,
     limit,
     standardHeaders: 'draft-8',
     legacyHeaders: false,
@@ -56,10 +64,11 @@ const limiter = (limit, error) =>
   });
 
 /** A generous per-client ceiling on every API route, against floods and scraping. */
-export const apiLimiter = (limit = 120) => limiter(limit, 'Too many requests. Wait a minute and try again.');
+export const apiLimiter = (limit = DEFAULT_API_LIMIT) =>
+  limiter(limit, 'Too many requests. Wait a minute and try again.');
 
 /** Generation calls a paid API, so it gets a much tighter per-client budget. */
-export const generationLimiter = (limit) =>
+export const generationLimiter = (/** @type {number} */ limit) =>
   limiter(limit, 'You are generating very quickly. Wait a minute and try again.');
 
 /**

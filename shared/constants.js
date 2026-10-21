@@ -148,4 +148,9 @@ export const LIMITS = Object.freeze({
   tableSizeMax: 20,
 });
 
+/**
+ * The ids of a list of `{ id }` objects or plain strings.
+ * @param {readonly (string | { id: string })[]} list
+ * @returns {string[]}
+ */
 export const idsOf = (list) => list.map((item) => (typeof item === 'string' ? item : item.id));

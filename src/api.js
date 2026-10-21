@@ -39,8 +39,9 @@ async function post(path, body, { signal, timeoutMs = REQUEST_TIMEOUT_MS } = {})
       signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
     });
   } catch (err) {
-    if (err.name === 'AbortError' && signal?.aborted) throw err;
-    if (err.name === 'TimeoutError') throw new ApiError('This is taking longer than usual. Try again in a moment.');
+    const name = /** @type {{ name?: string } | null} */ (err)?.name;
+    if (name === 'AbortError' && signal?.aborted) throw err;
+    if (name === 'TimeoutError') throw new ApiError('This is taking longer than usual. Try again in a moment.');
     throw new ApiError('Could not reach Festa. Check your connection and try again.');
   }
 
